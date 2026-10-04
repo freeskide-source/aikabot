@@ -282,7 +282,24 @@ const save=a=>{try{localStorage.setItem("aika.t",JSON.stringify(a.slice(0,50)))}
 const A=new Audio(); let playing=null;
 A.onended=()=>{playing=null;icons()};
 function icons(){document.querySelectorAll(".row").forEach(r=>{const b=r.querySelector(".pl");if(b)b.innerHTML=ic(r.dataset.id==playing&&!A.paused?"pause":"play",18)})}
-function row(t){
+async function downloadFile(url, filename){
+  tg?.HapticFeedback?.impactOccurred?.("light");
+  try{
+    const r = await fetch(url, { mode: "cors" });
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const blob = await r.blob();
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = objUrl; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(objUrl), 30000);
+  }catch(e){
+    // Fallback: системный браузер / новая вкладка
+    if(tg?.openLink) tg.openLink(url); else window.open(url, "_blank");
+  }
+}
+
+  function row(t){
   const d=document.createElement("div");d.className="row";d.dataset.id=t.id;
   const th=t.imageUrl?`<img class="th" src="${encodeURI(t.imageUrl)}" alt="">`:`<div class="th"></div>`;
   d.innerHTML=`${th}<div class="ri"><b></b><span></span></div>`;
@@ -293,7 +310,15 @@ function row(t){
   const fv=document.createElement("button");fv.className="ib fv"+(t.fav?" on":"");fv.innerHTML=ic("heart",18);
   fv.onclick=()=>{const all=load(),x=all.find(z=>z.id==t.id);if(x){x.fav=!x.fav;t.fav=x.fav;save(all)}fv.classList.toggle("on",!!t.fav);hap();if(cur==="fav")renderFav()};
   d.append(pl,fv);
-  if(t.audioUrl){const a=document.createElement("a");a.className="ib";a.href=t.audioUrl;a.target="_blank";a.rel="noopener";a.innerHTML=ic("down",18);d.appendChild(a)}
+  if(t.audioUrl){
+  const a=document.createElement("a");
+  a.className="ib";
+  a.href="#";
+  a.innerHTML=ic("down",18);
+  a.title="Скачать";
+  a.onclick=e=>{ e.preventDefault(); downloadFile(t.audioUrl, (t.title||"aika-track")+".mp3"); };
+  d.appendChild(a);
+}
   return d;
 }
 const fill=(el,list,msg)=>{el.innerHTML="";list.length?list.forEach(t=>el.appendChild(row(t))):(el.innerHTML=`<div class="empty">${msg}</div>`)};
