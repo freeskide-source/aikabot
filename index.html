@@ -283,19 +283,49 @@ const A=new Audio(); let playing=null;
 A.onended=()=>{playing=null;icons()};
 function icons(){document.querySelectorAll(".row").forEach(r=>{const b=r.querySelector(".pl");if(b)b.innerHTML=ic(r.dataset.id==playing&&!A.paused?"pause":"play",18)})}
 async function downloadFile(url, filename){
-  tg?.HapticFeedback?.impactOccurred?.("light");
+  // лёгкая вибрация
+  try{ tg?.HapticFeedback?.impactOccurred?.("light"); }catch(e){}
+
+  // 1) Современный API Telegram — скачивает файл прямо в клиент
+  if(typeof tg?.downloadFile === "function"){
+    tg.downloadFile({ url, file_name: filename }, (ok)=>{
+      if(!ok){
+        // не скачалось — пробуем через браузер
+        try{ tg.openLink(url, { try_instant_view: false }); }
+        catch(e){ window.open(url, "_blank", "noopener"); }
+      }
+    });
+    return;
+  }
+
+  // 2) fetch → blob → <a download> (работает в обычном браузере и Desktop WebView)
   try{
     const r = await fetch(url, { mode: "cors" });
     if(!r.ok) throw new Error("HTTP "+r.status);
     const blob = await r.blob();
     const objUrl = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = objUrl; a.download = filename;
-    document.body.appendChild(a); a.click(); a.remove();
+    a.href = objUrl;
+    a.download = filename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
     setTimeout(()=>URL.revokeObjectURL(objUrl), 30000);
+    return;
   }catch(e){
-    // Fallback: системный браузер / новая вкладка
-    if(tg?.openLink) tg.openLink(url); else window.open(url, "_blank");
+    console.warn("blob download failed:", e.message);
+  }
+
+  // 3) Fallback — открыть ссылку в браузере, там скачается
+  try{
+    if(typeof tg?.openLink === "function"){
+      tg.openLink(url, { try_instant_view: false });
+    } else {
+      window.open(url, "_blank", "noopener");
+    }
+  }catch(e){
+    tg?.showAlert?.("Не удалось скачать. Пришлите трек в чат.");
   }
 }
 
