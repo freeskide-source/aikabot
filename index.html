@@ -166,10 +166,89 @@ nav button.on{color:var(--ac)}nav button.on::after{content:"";position:absolute;
 /* API_BASE — публичный URL webhook'ов n8n. Пусто = демо-режим без реальной генерации. */
 const API_BASE = "https://45.43.159.114.nip.io/webhook/aika";
 const POLL_MS = 5000, POLL_MAX = 60, MAX_MB = 20;
-
-const GENRES = [["ambient","Эмбиент"],["pop","Поп"],["rock","Рок"],["hip hop","Хип-хоп"],["electronic","Электроника"],["deep house","Дип-хаус"],["r&b","R&B"],["reggae","Регги"],["classical","Классика"],["indie","Инди"],["alternative","Альтернатива"],["punk","Панк"],["metal","Метал"],["jazz","Джаз"],["blues","Блюз"],["soul","Соул"],["funk","Фанк"],["disco","Диско"],["house","Хаус"],["techno","Техно"],["trance","Транс"],["drum and bass","Драм-н-бейс"],["dubstep","Дабстеп"],["synthwave","Синтвейв"],["lo-fi","Лоу-фай"],["trap","Трэп"],["drill","Дрилл"],["phonk","Фонк"],["country","Кантри"],["folk","Фолк"],["latin","Латино"],["reggaeton","Реггетон"],["k-pop","K-pop"],["j-pop","J-pop"],["afrobeats","Афробит"],["edm","EDM"],["orchestral","Оркестр"],["cinematic","Кинематограф"],["gospel","Госпел"],["ska","Ска"],["shoegaze","Шугейз"],["chillwave","Чиллвейв"],["hard rock","Хард-рок"],["progressive rock","Прог-рок"],["bossa nova","Босса-нова"],["russian chanson","Шансон"],["eurodance","Евродэнс"],["acoustic","Акустика"],["tropical house","Тропикал-хаус"],["post-punk","Пост-панк"]];
-const MOODS = [["calm","Спокойное"],["energetic","Энергичное"],["sad","Грустное"],["happy","Радостное"],["romantic","Романтичное"],["dark","Мрачное"],["epic","Эпичное"],["dreamy","Мечтательное"],["nostalgic","Ностальгическое"],["aggressive","Агрессивное"]];
-const INSTR = [["piano","Пианино"],["guitar","Гитара"],["violin","Скрипка"],["synthesizer","Синтезатор"],["drums","Барабаны"],["bass","Бас"],["saxophone","Саксофон"],["flute","Флейта"],["harp","Арфа"],["organ","Орган"],["cello","Виолончель"],["trumpet","Труба"]];
+const GENRES = [
+  ["ambient","Эмбиент","ambient, atmospheric pads, no drums, wide stereo reverb, slow evolving textures, tape hiss"],
+  ["pop","Поп","pop, catchy hook, bright synths, punchy drums, sidechain bass, radio-ready production"],
+  ["rock","Рок","rock, distorted guitars, live drums, driving bass, anthemic chorus, arena energy"],
+  ["hip hop","Хип-хоп","hip hop, boom bap drums, deep 808 bass, sampled soul chops, head-nod groove"],
+  ["electronic","Электроника","electronic, analog synths, arpeggiated bass, crisp drum machine, wide stereo field"],
+  ["deep house","Дип-хаус","deep house, warm sub-bass, filtered chords, shuffled hi-hats, 122 BPM, hypnotic groove"],
+  ["r&b","R&B","contemporary R&B, smooth keys, silky vocals, slow jam drums, lush harmonies"],
+  ["reggae","Регги","reggae, offbeat skank guitar, deep rolling bass, one-drop drums, sunny island vibe"],
+  ["classical","Классика","classical, orchestral strings, grand piano, dynamic swells, concert hall reverb"],
+  ["indie","Инди","indie, jangly guitars, warm lo-fi drums, intimate vocals, DIY charm"],
+  ["alternative","Альтернатива","alternative, angular guitars, driving drums, brooding bass, 90s alt-rock energy"],
+  ["punk","Панк","punk, fast downstroked guitars, snappy snare, shouty vocals, raw garage production"],
+  ["metal","Метал","metal, palm-muted riffs, double-kick drums, distorted bass, aggressive vocals, tight mix"],
+  ["jazz","Джаз","jazz, swinging ride cymbal, upright bass, brushed drums, upright piano, smoky club vibe"],
+  ["blues","Блюз","blues, electric slide guitar, walking bass, shuffle drums, gritty male vocals"],
+  ["soul","Соул","soul, warm horns, driving bass, gospel-tinged vocals, vintage 60s Motown production"],
+  ["funk","Фанк","funk, slap bass, tight horn stabs, syncopated drums, wah guitar, 1970s groove"],
+  ["disco","Диско","disco, four-on-the-floor kick, lush strings, funky guitar, sparkling hi-hats, 120 BPM"],
+  ["house","Хаус","house, four-on-the-floor kick, filtered chords, deep sub-bass, shuffling hats, 124 BPM"],
+  ["techno","Техно","techno, driving kick, hypnotic loops, metallic hats, industrial textures, 132 BPM"],
+  ["trance","Транс","trance, soaring supersaw lead, rolling bassline, uplifting breakdown, 138 BPM"],
+  ["drum and bass","Драм-н-бейс","drum and bass, breakbeat drums, deep sub-bass, amen chops, 174 BPM"],
+  ["dubstep","Дабстеп","dubstep, wobbling bass, half-time drums, heavy sub, dark synth stabs, 140 BPM"],
+  ["synthwave","Синтвейв","synthwave, retro analog synths, gated reverb drums, neon bassline, 80s soundtrack"],
+  ["lo-fi","Лоу-фай","lo-fi hip hop, dusty vinyl crackle, mellow jazzy chords, boom bap drums, tape saturation"],
+  ["trap","Трэп","trap, rattling hi-hats, hard 808 sub, moody synths, dark melody, 140 BPM"],
+  ["drill","Дрилл","UK drill, sliding 808 bass, skittering hats, dark piano melody, aggressive flow"],
+  ["phonk","Фонк","phonk, distorted cowbell, pitched vocal chops, lo-fi drums, dark Memphis vibe"],
+  ["country","Кантри","country, acoustic guitar, pedal steel, walking bass, twangy vocals, southern twang"],
+  ["folk","Фолк","folk, fingerpicked acoustic guitar, warm harmonies, upright bass, intimate storytelling"],
+  ["latin","Латино","latin, syncopated percussion, nylon guitar, brass stabs, passionate vocals, salsa groove"],
+  ["reggaeton","Реггетон","reggaeton, dembow beat, deep 808 bass, tropical synths, Spanish vocals"],
+  ["k-pop","K-pop","K-pop, bright synths, punchy drums, layered vocals, slick production, key change"],
+  ["j-pop","J-pop","J-pop, energetic synths, upbeat drums, bright vocals, anime-opening energy"],
+  ["afrobeats","Афробит","afrobeats, log drum bass, shaker grooves, bright guitars, smooth vocals"],
+  ["edm","EDM","EDM, festival build-up, supersaw drop, sidechain bass, 128 BPM, big room energy"],
+  ["orchestral","Оркестр","orchestral, cinematic strings, brass swells, timpani hits, epic dynamic range"],
+  ["cinematic","Кинематограф","cinematic, hybrid orchestral, deep sub impacts, soaring strings, trailer-ready"],
+  ["gospel","Госпел","gospel, Hammond organ, choir harmonies, driving drums, uplifting key change"],
+  ["ska","Ска","ska, upstroke guitar, walking bass, punchy horn section, offbeat drums"],
+  ["shoegaze","Шугейз","shoegaze, wall of reverb guitars, dreamy vocals, soft drums, wall-of-sound"],
+  ["chillwave","Чиллвейв","chillwave, warm synth pads, tape saturation, soft drum machine, dreamy vocals"],
+  ["hard rock","Хард-рок","hard rock, crunchy guitar riffs, driving drums, powerful vocals, classic rock energy"],
+  ["progressive rock","Прог-рок","progressive rock, odd time signatures, layered guitars, synth textures, epic structures"],
+  ["bossa nova","Босса-нова","bossa nova, nylon guitar, brushed drums, soft vocals, gentle Portuguese groove"],
+  ["russian chanson","Шансон","russian chanson, acoustic guitar, minor chords, storytelling vocals, melancholic"],
+  ["eurodance","Евродэнс","eurodance, four-on-the-floor kick, bright synths, female vocals, 90s dance energy, 140 BPM"],
+  ["acoustic","Акустика","acoustic, fingerpicked guitar, warm vocals, no drums, intimate room sound"],
+  ["tropical house","Тропикал-хаус","tropical house, plucky marimba, soft kick, breezy synths, summer vibe, 110 BPM"],
+  ["post-punk","Пост-панк","post-punk, angular guitar, driving bass, tom-heavy drums, cold 80s atmosphere"]
+];
+const MOODS = [
+  ["calm","Спокойное","calm, introspective, gentle dynamics, low energy, meditative"],
+  ["energetic","Энергичное","energetic, driving, high energy, punchy, uplifting"],
+  ["sad","Грустное","sad, melancholic, minor key, slow tempo, tender delivery"],
+  ["happy","Радостное","happy, joyful, bright chords, upbeat groove, warm tone"],
+  ["romantic","Романтичное","romantic, intimate, sensual, soft dynamics, tender vocals"],
+  ["dark","Мрачное","dark, ominous, minor key, tense atmosphere, brooding"],
+  ["epic","Эпичное","epic, cinematic, huge dynamic range, dramatic build, cinematic climax"],
+  ["dreamy","Мечтательное","dreamy, hazy reverb, soft focus, floating, ethereal"],
+  ["nostalgic","Ностальгическое","nostalgic, warm analog, retro vibe, sweet melancholy, tape-warmth"],
+  ["aggressive","Агрессивное","aggressive, intense, distorted, hard-hitting, raw power"]
+];
+const INSTR = [
+  ["piano","Пианино","grand piano, expressive playing, natural room reverb"],
+  ["guitar","Гитара","electric guitar, clean tone, subtle reverb, expressive bends"],
+  ["violin","Скрипка","solo violin, expressive vibrato, warm strings"],
+  ["synthesizer","Синтезатор","warm analog synth, subtle filter movement, wide stereo"],
+  ["drums","Барабаны","live acoustic drums, punchy snare, tight kick"],
+  ["bass","Бас","deep electric bass, warm tone, locked to kick"],
+  ["saxophone","Саксофон","tenor saxophone, breathy tone, jazzy phrasing"],
+  ["flute","Флейта","airy flute, soft vibrato, melodic lines"],
+  ["harp","Арфа","celestial harp, arpeggiated figures, shimmering"],
+  ["organ","Орган","Hammond organ, Leslie speaker, warm church tone"],
+  ["cello","Виолончель","solo cello, deep woody tone, expressive bowing"],
+  ["trumpet","Труба","muted trumpet, jazzy lines, warm brass tone"]
+];
+const VOCAL_DESC = {
+  male:"male warm baritone vocals, intimate delivery, natural reverb",
+  female:"female bright vocals, clear tone, intimate delivery",
+  instrumental:"instrumental, no vocals, no lyrics"
+};
 const DURS = ["0:30","1:00","1:30","2:00","3:00","4:00"].map(d=>[d,d]);
 
 const IC = {
@@ -310,6 +389,15 @@ function validate(){
 }
 
 /* API */
+  /* buildStyle — собирает богатый style-промт для Suno из выбранных пользователем ярлыков */
+function buildStyle(p){
+  const out=[];
+  p.genres.forEach(g=>{const d=GENRES.find(x=>x[0]===g);if(d&&d[2])out.push(d[2])});
+  p.mood.forEach(m=>{const d=MOODS.find(x=>x[0]===m);if(d&&d[2])out.push(d[2])});
+  p.instruments.forEach(i=>{const d=INSTR.find(x=>x[0]===i);if(d&&d[2])out.push(d[2])});
+  out.push(VOCAL_DESC[p.vocal]||VOCAL_DESC.instrumental);
+  return out.join(", ");
+}
 const hd=()=>({"Content-Type":"application/json","X-Init-Data":tg?.initData||""});
 async function api(path,opt){const r=await fetch(API_BASE+path,opt);if(!r.ok)throw new Error("Сервер вернул "+r.status);return r.json()}
 const start=p=>API_BASE?api("/generate",{method:"POST",headers:hd(),body:JSON.stringify(p)}):Promise.resolve({taskId:"demo"});
@@ -319,7 +407,8 @@ let tick;
 async function submit(){
   if(!validate())return;$("err").textContent="";
   const a=S.mode==="audio";
-  const p={mode:S.mode,genres:S.genres,mood:S.mood[0]||null,instruments:S.instr,duration:S.dur[0],vocal:S.vocal,
+    const p={mode:S.mode,genres:S.genres,mood:S.mood,instruments:S.instr,duration:S.dur[0],vocal:S.vocal,
+    style:buildStyle({genres:S.genres,mood:S.mood,instruments:S.instr,vocal:S.vocal}),
     lyrics:S.mode==="custom"?$("lyrics").value.trim():"",prompt:$("prompt").value.trim(),
     refUrl:a?S.ref.url:null,refWeight:a?$("weight").value/100:null};
   view("busy");const t0=Date.now();$("tm").textContent="00:00";
