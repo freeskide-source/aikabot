@@ -140,8 +140,9 @@ nav button.on{color:var(--ac)}nav button.on::after{content:"";position:absolute;
 
 <section id="v-busy" class="busy hide">
   <h2>Синтезируем трек</h2>
-  <p>Обычно 1–3 минуты. Результат придёт и в чат.</p>
+  <p>Обычно 1–3 минуты, кавер по референсу может занять дольше. Результат придёт и в чат.</p>
   <div class="tm" id="tm">00:00</div>
+  <p class="fm" id="st" style="margin-top:10px"></p>
 </section>
 
 <section id="v-done" class="hide"><h2>Трек готов</h2><div id="doneList"></div><button class="go" id="again" style="margin-top:6px"><span data-ic="spark" data-s="20"></span>Создать ещё</button></section>
@@ -165,7 +166,7 @@ nav button.on{color:var(--ac)}nav button.on::after{content:"";position:absolute;
 <script>
 /* API_BASE — публичный URL webhook'ов n8n. Пусто = демо-режим без реальной генерации. */
 const API_BASE = "https://45.43.159.114.nip.io/webhook/aika";
-const POLL_MS = 5000, POLL_MAX = 60, MAX_MB = 20;
+const MAX_MB = 20;
 const GENRES = [
   ["ambient","Эмбиент","ambient, atmospheric pads, no drums, wide stereo reverb, slow evolving textures, tape hiss"],
   ["pop","Поп","pop, catchy hook, bright synths, punchy drums, sidechain bass, radio-ready production"],
@@ -417,7 +418,7 @@ function upload(file,prog){return new Promise((res,rej)=>{
   if(!API_BASE){let p=0;const t=setInterval(()=>{p+=20;prog(p);if(p>=100){clearInterval(t);res("demo://"+file.name)}},200);return}
   const x=new XMLHttpRequest(),fd=new FormData();fd.append("file",file);x.open("POST",API_BASE+"/upload");x.setRequestHeader("X-Init-Data",tg?.initData||"");
   x.upload.onprogress=e=>e.lengthComputable&&prog(e.loaded/e.total*100);
-  x.onload=()=>{try{x.status<300?res(JSON.parse(x.responseText).uploadUrl):rej(new Error("Ошибка загрузки "+x.status))}catch(e){rej(new Error("Неверный ответ сервера"))}};
+  x.onload=()=>{try{x.status<300?res(JSON.parse(x.responseText).uploadUrl):rej(new Error("Ошибка загрузки "+x.status+(()=>{try{const m=JSON.parse(x.responseText).error;return m?": "+m:""}catch(e){return ""}})()))}catch(e){rej(new Error("Неверный ответ сервера"))}};
   x.onerror=()=>rej(new Error("Сеть недоступна"));x.send(fd)})}
 function clearRef(){S.ref=null;$("fileIn").value="";$("fplay").removeAttribute("src");$("fileCard").classList.add("hide");$("drop").classList.remove("hide");validate()}
 async function pick(f){
@@ -454,33 +455,46 @@ function buildStyle(p){
   return out.join(", ");
 }
 const hd=()=>({"Content-Type":"application/json","X-Init-Data":tg?.initData||""});
-async function api(path,opt){const r=await fetch(API_BASE+path,opt);if(!r.ok)throw new Error("Сервер вернул "+r.status);return r.json()}
+async function api(path,opt){const r=await fetch(API_BASE+path,opt);if(!r.ok){let m="";try{m=(await r.json()).error||""}catch(e){}throw new Error("Сервер вернул "+r.status+(m?": "+m:""))}return r.json()}
 const start=p=>API_BASE?api("/generate",{method:"POST",headers:hd(),body:JSON.stringify(p)}):Promise.resolve({taskId:"demo"});
 const status=(id,n)=>API_BASE?api("/status?taskId="+encodeURIComponent(id),{headers:hd()}):Promise.resolve(n>=2?{status:"success",tracks:[{title:"Mountain Flow (демо)"}]}:{status:"pending"});
 
 let tick;
+const PKEY="aika.pending", MAX_WAIT=15*60*1000;
+const setPending=v=>{try{v?localStorage.setItem(PKEY,JSON.stringify(v)):localStorage.removeItem(PKEY)}catch(e){}};
+const ST={PENDING:"в очереди",GENERATING:"идёт генерация",TEXT_SUCCESS:"готов текст",FIRST_SUCCESS:"готов первый вариант"};
+async function poll(task){                      // task: {taskId, genre, t0}
+  view("busy");clearInterval(tick);
+  const upd=()=>{const s=Math.floor((Date.now()-task.t0)/1000);$("tm").textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")};
+  upd();tick=setInterval(upd,500);
+  let bad=0,n=0,last="";
+  try{
+    while(Date.now()-task.t0<MAX_WAIT){
+      await new Promise(r=>setTimeout(r,API_BASE?(Date.now()-task.t0<120000?5000:8000):3000));
+      let s;
+      try{s=await status(task.taskId,n++);bad=0}catch(e){if(++bad>=6)throw e;continue}      // единичные сбои опроса не прерывают ожидание
+      if(s.raw){last=s.raw;$("st").textContent="Статус Suno: "+(ST[last]||last)}
+      if(s.status==="success"){clearInterval(tick);setPending(null);return finish(s.tracks||[],task.genre)}
+      if(s.status==="failed")throw new Error("Suno: "+(s.message||"генерация не удалась"));
+    }
+    throw new Error(`Suno всё ещё работает над треком (статус: ${last||"нет данных"}). Он придёт в чат, когда будет готов.`);
+  }catch(e){clearInterval(tick);setPending(null);view("home");$("err").textContent=e.message||"Что-то пошло не так";hap("error")}
+}
 async function submit(){
   if(!validate())return;$("err").textContent="";
   const a=S.mode==="audio";
-    const p={mode:S.mode,genres:S.genres,mood:S.mood,instruments:S.instr,duration:S.dur[0],vocal:S.vocal,
+  const p={mode:S.mode,genres:S.genres,mood:S.mood,instruments:S.instr,duration:S.dur[0],vocal:S.vocal,
     style:buildStyle({genres:S.genres,mood:S.mood,instruments:S.instr,vocal:S.vocal}),
     lyrics:S.mode==="custom"?$("lyrics").value.trim():"",prompt:$("prompt").value.trim(),
     refUrl:a?S.ref.url:null,refWeight:a?$("weight").value/100:null};
-  view("busy");const t0=Date.now();$("tm").textContent="00:00";
-  tick=setInterval(()=>{const s=Math.floor((Date.now()-t0)/1000);$("tm").textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")},500);
+  view("busy");$("tm").textContent="00:00";$("st").textContent="Отправляем запрос…";
   try{
     const {taskId}=await start(p);
-    for(let n=0;n<POLL_MAX;n++){
-      await new Promise(r=>setTimeout(r,API_BASE?POLL_MS:3000));
-      const s=await status(taskId,n);
-      if(s.status==="success"){clearInterval(tick);return finish(s.tracks||[],p)}
-      if(s.status==="failed")throw new Error("Генерация не удалась");
-    }
-    throw new Error("Генерация занимает дольше обычного — трек придёт в чат.");
-  }catch(e){clearInterval(tick);view("home");$("err").textContent=e.message||"Что-то пошло не так";hap("error")}
+    const task={taskId,genre:p.genres.map(v=>lab(GENRES,v)).join(", "),t0:Date.now()};
+    setPending(task);return poll(task);          // задача переживает закрытие приложения
+  }catch(e){view("home");$("err").textContent=e.message||"Что-то пошло не так";hap("error")}
 }
-function finish(tracks,p){
-  const g=p.genres.map(v=>lab(GENRES,v)).join(", ");
+function finish(tracks,g){
   const items=tracks.map((t,i)=>({id:Date.now()+i,title:t.title,audioUrl:t.audioUrl||null,imageUrl:t.imageUrl||null,genre:g,ts:Date.now(),fav:false}));
   save([...items,...load()]);view("done");fill($("doneList"),items,"");hap("success");
 }
@@ -614,6 +628,7 @@ let isBusy=false;
   else requestAnimationFrame(ts=>{last=ts;frame(ts)});
 })();
 pills();view("home");
+try{const t=JSON.parse(localStorage.getItem(PKEY)||"null");if(t&&Date.now()-t.t0<MAX_WAIT)poll(t);else setPending(null)}catch(e){}   // продолжить ожидание после повторного открытия
 </script>
 </body>
 </html>
