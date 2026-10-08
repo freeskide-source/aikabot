@@ -56,6 +56,26 @@ audio{width:100%;height:36px}input[type=range]{width:100%;accent-color:var(--ac)
 .ib{width:38px;height:38px;border-radius:50%;border:1px solid var(--ln);background:rgba(0,0,0,.28);color:var(--tx);display:grid;place-items:center;flex:none;text-decoration:none}
 .ib.pl{width:44px;height:44px}.ib.fv.on{color:#ff8fa3}.ib:disabled{opacity:.35}
 .empty{color:var(--mu);text-align:center;padding:40px 0}
+/* плеер: перемотка и текст песни */
+.row{flex-wrap:wrap}
+.rx{flex:0 0 100%}
+.sk{display:none;align-items:center;gap:10px;margin-top:4px}
+.row.act .sk{display:flex}
+.sk time{font:400 11px/1 Manrope,sans-serif;font-variant-numeric:tabular-nums;color:var(--mu);min-width:32px}
+.sk time.dur{text-align:right}
+input.seek{-webkit-appearance:none;appearance:none;flex:1;height:28px;margin:0;background:transparent;touch-action:pan-y;cursor:pointer}
+input.seek::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(90deg,var(--ac) var(--p,0%),rgba(255,255,255,.14) var(--p,0%))}
+input.seek::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;margin-top:-6px;border-radius:50%;background:var(--ac);box-shadow:0 0 0 5px rgba(166,217,143,.16)}
+input.seek::-moz-range-track{height:4px;border-radius:2px;background:rgba(255,255,255,.14)}
+input.seek::-moz-range-progress{height:4px;border-radius:2px;background:var(--ac)}
+input.seek::-moz-range-thumb{width:16px;height:16px;border:0;border-radius:50%;background:var(--ac);box-shadow:0 0 0 5px rgba(166,217,143,.16)}
+input.seek:focus-visible{outline:none}
+.lychip{display:block;margin-top:5px;border:1px solid var(--ln);background:rgba(0,0,0,.28);color:var(--ac);font:500 11px/1 Manrope,sans-serif;padding:5px 11px;border-radius:999px}
+.row.lyr .lychip{background:rgba(166,217,143,.14);border-color:var(--ac)}
+.ly{display:none;margin-top:8px;max-height:min(46vh,340px);overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 14px;border:1px solid var(--ln);border-radius:16px;background:rgba(0,0,0,.28);font-size:14px;line-height:1.6}
+.row.lyr .ly{display:block}
+.ly .tg{margin-top:10px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ac)}
+.ly .tg:first-child{margin-top:0}
 h2{font:400 26px Jost;margin:6px 0 14px}
 /* busy */
 .busy{text-align:center}.busy h2{margin:4px 0}.busy p{color:var(--mu);margin:0 0 8px}.tm{font:300 30px Jost;letter-spacing:.1em;color:var(--ac)}
@@ -140,8 +160,9 @@ nav button.on{color:var(--ac)}nav button.on::after{content:"";position:absolute;
 
 <section id="v-busy" class="busy hide">
   <h2>Синтезируем трек</h2>
-  <p>Обычно 1–3 минуты. Результат придёт и в чат.</p>
+  <p>Обычно 1–3 минуты, кавер по референсу может занять дольше. Результат придёт и в чат.</p>
   <div class="tm" id="tm">00:00</div>
+  <p class="fm" id="st" style="margin-top:10px"></p>
 </section>
 
 <section id="v-done" class="hide"><h2>Трек готов</h2><div id="doneList"></div><button class="go" id="again" style="margin-top:6px"><span data-ic="spark" data-s="20"></span>Создать ещё</button></section>
@@ -165,7 +186,7 @@ nav button.on{color:var(--ac)}nav button.on::after{content:"";position:absolute;
 <script>
 /* API_BASE — публичный URL webhook'ов n8n. Пусто = демо-режим без реальной генерации. */
 const API_BASE = "https://45.43.159.114.nip.io/webhook/aika";
-const POLL_MS = 5000, POLL_MAX = 60, MAX_MB = 20;
+const MAX_MB = 20;
 const GENRES = [
   ["ambient","Эмбиент","ambient, atmospheric pads, no drums, wide stereo reverb, slow evolving textures, tape hiss"],
   ["pop","Поп","pop, catchy hook, bright synths, punchy drums, sidechain bass, radio-ready production"],
@@ -281,7 +302,26 @@ const load=()=>{try{return JSON.parse(localStorage.getItem("aika.t")||"[]")}catc
 const save=a=>{try{localStorage.setItem("aika.t",JSON.stringify(a.slice(0,50)))}catch(e){}};
 const A=new Audio(); let playing=null;
 A.onended=()=>{playing=null;icons()};
-function icons(){document.querySelectorAll(".row").forEach(r=>{const b=r.querySelector(".pl");if(b)b.innerHTML=ic(r.dataset.id==playing&&!A.paused?"pause":"play",18)})}
+function icons(){document.querySelectorAll(".row").forEach(r=>{const b=r.querySelector(".pl"),on=r.dataset.id==playing;if(b)b.innerHTML=ic(on&&!A.paused?"pause":"play",18);r.classList.toggle("act",on)});sync()}
+const mmss=s=>isFinite(s)&&s>=0?Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0"):"0:00";
+function sync(){                                // позиция/длительность активной дорожки
+  document.querySelectorAll(".row.act").forEach(r=>{
+    const sk=r.querySelector(".seek");if(!sk||sk.dataset.drag==="1")return;
+    const d=A.duration,c=A.currentTime||0,v=isFinite(d)&&d>0?Math.round(c/d*1000):0;
+    sk.value=v;sk.style.setProperty("--p",v/10+"%");
+    r.querySelector(".cur").textContent=mmss(c);r.querySelector(".dur").textContent=mmss(d);
+  });
+}
+["timeupdate","durationchange","loadedmetadata","seeked"].forEach(e=>A.addEventListener(e,sync));
+["play","pause"].forEach(e=>A.addEventListener(e,icons));
+function fillLyrics(el,text){                   // безопасно: только textContent; [Verse]/[Chorus] — как заголовки
+  el.textContent="";
+  text.replace(/\r/g,"").split("\n").forEach(line=>{
+    const x=document.createElement("div"),t=line.trim();
+    if(/^\[[^\]]+\]$/.test(t)){x.className="tg";x.textContent=t.slice(1,-1)}else{x.className="ln";x.textContent=line||"\u00a0"}
+    el.appendChild(x);
+  });
+}
 async function downloadFile(url, filename){
   // лёгкая вибрация
   try{ tg?.HapticFeedback?.impactOccurred?.("light"); }catch(e){}
@@ -336,7 +376,7 @@ async function downloadFile(url, filename){
   d.querySelector("b").textContent=t.title||"Без названия";
   d.querySelector("span").textContent=[t.genre,new Date(t.ts).toLocaleDateString("ru-RU")].filter(Boolean).join(" · ");
   const pl=document.createElement("button");pl.className="ib pl";pl.innerHTML=ic("play",18);pl.disabled=!t.audioUrl;
-  pl.onclick=()=>{ if(playing==t.id&&!A.paused){A.pause()}else{A.src=t.audioUrl;A.play();playing=t.id} icons(); };
+  pl.onclick=()=>{ if(playing==t.id){A.paused?A.play().catch(()=>{}):A.pause()}else{A.src=t.audioUrl;A.play().catch(()=>{});playing=t.id} icons(); };
   const fv=document.createElement("button");fv.className="ib fv"+(t.fav?" on":"");fv.innerHTML=ic("heart",18);
   fv.onclick=()=>{const all=load(),x=all.find(z=>z.id==t.id);if(x){x.fav=!x.fav;t.fav=x.fav;save(all)}fv.classList.toggle("on",!!t.fav);hap();if(cur==="fav")renderFav()};
   d.append(pl,fv);
@@ -349,6 +389,22 @@ async function downloadFile(url, filename){
   a.onclick=e=>{ e.preventDefault(); downloadFile(t.audioUrl, (t.title||"aika-track")+".mp3"); };
   d.appendChild(a);
 }
+  // перемотка + текст песни
+  const rx=document.createElement("div");rx.className="rx";
+  rx.innerHTML='<div class="sk"><time class="cur">0:00</time><input class="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Перемотка"><time class="dur">0:00</time></div><div class="ly"></div>';
+  d.appendChild(rx);
+  const sk=rx.querySelector(".seek");
+  sk.addEventListener("input",()=>{sk.dataset.drag="1";const dd=A.duration;sk.style.setProperty("--p",sk.value/10+"%");rx.querySelector(".cur").textContent=mmss(isFinite(dd)?sk.value/1000*dd:0)});
+  sk.addEventListener("change",()=>{const dd=A.duration;if(isFinite(dd)&&dd>0)A.currentTime=sk.value/1000*dd;sk.dataset.drag="0";sync()});
+  sk.addEventListener("blur",()=>{sk.dataset.drag="0"});
+  const lyr=(t.lyrics||"").trim();
+  if(lyr){
+    fillLyrics(rx.querySelector(".ly"),lyr);
+    const chip=document.createElement("button");chip.className="lychip";chip.textContent="Текст";chip.setAttribute("aria-expanded","false");
+    chip.onclick=()=>{const on=d.classList.toggle("lyr");chip.setAttribute("aria-expanded",on);hap()};
+    d.querySelector(".ri").appendChild(chip);
+  }
+  if(String(t.id)===String(playing)){d.classList.add("act");setTimeout(icons,0)}   // строка уже играющего трека в другом разделе
   return d;
 }
 const fill=(el,list,msg)=>{el.innerHTML="";list.length?list.forEach(t=>el.appendChild(row(t))):(el.innerHTML=`<div class="empty">${msg}</div>`)};
@@ -417,7 +473,7 @@ function upload(file,prog){return new Promise((res,rej)=>{
   if(!API_BASE){let p=0;const t=setInterval(()=>{p+=20;prog(p);if(p>=100){clearInterval(t);res("demo://"+file.name)}},200);return}
   const x=new XMLHttpRequest(),fd=new FormData();fd.append("file",file);x.open("POST",API_BASE+"/upload");x.setRequestHeader("X-Init-Data",tg?.initData||"");
   x.upload.onprogress=e=>e.lengthComputable&&prog(e.loaded/e.total*100);
-  x.onload=()=>{try{x.status<300?res(JSON.parse(x.responseText).uploadUrl):rej(new Error("Ошибка загрузки "+x.status))}catch(e){rej(new Error("Неверный ответ сервера"))}};
+  x.onload=()=>{try{x.status<300?res(JSON.parse(x.responseText).uploadUrl):rej(new Error("Ошибка загрузки "+x.status+(()=>{try{const m=JSON.parse(x.responseText).error;return m?": "+m:""}catch(e){return ""}})()))}catch(e){rej(new Error("Неверный ответ сервера"))}};
   x.onerror=()=>rej(new Error("Сеть недоступна"));x.send(fd)})}
 function clearRef(){S.ref=null;$("fileIn").value="";$("fplay").removeAttribute("src");$("fileCard").classList.add("hide");$("drop").classList.remove("hide");validate()}
 async function pick(f){
@@ -454,34 +510,52 @@ function buildStyle(p){
   return out.join(", ");
 }
 const hd=()=>({"Content-Type":"application/json","X-Init-Data":tg?.initData||""});
-async function api(path,opt){const r=await fetch(API_BASE+path,opt);if(!r.ok)throw new Error("Сервер вернул "+r.status);return r.json()}
+async function api(path,opt){const r=await fetch(API_BASE+path,opt);if(!r.ok){let m="";try{m=(await r.json()).error||""}catch(e){}throw new Error("Сервер вернул "+r.status+(m?": "+m:""))}return r.json()}
 const start=p=>API_BASE?api("/generate",{method:"POST",headers:hd(),body:JSON.stringify(p)}):Promise.resolve({taskId:"demo"});
-const status=(id,n)=>API_BASE?api("/status?taskId="+encodeURIComponent(id),{headers:hd()}):Promise.resolve(n>=2?{status:"success",tracks:[{title:"Mountain Flow (демо)"}]}:{status:"pending"});
+const status=(id,n)=>API_BASE?api("/status?taskId="+encodeURIComponent(id),{headers:hd()}):Promise.resolve(n>=2?{status:"success",tracks:[{title:"Mountain Flow (демо)",lyrics:"[Verse]\nДемо-текст песни\nВторая строка куплета\n\n[Chorus]\nПрипев из демо-режима"}]}:{status:"pending"});
 
 let tick;
+const PKEY="aika.pending", MAX_WAIT=15*60*1000;
+const setPending=v=>{try{v?localStorage.setItem(PKEY,JSON.stringify(v)):localStorage.removeItem(PKEY)}catch(e){}};
+const ST={PENDING:"в очереди",GENERATING:"идёт генерация",TEXT_SUCCESS:"готов текст песни",FIRST_SUCCESS:"готов первый вариант",SUCCESS:"готово"};
+const FAIL={CREATE_TASK_FAILED:"не удалось создать задачу",GENERATE_AUDIO_FAILED:"не удалось сгенерировать аудио",SENSITIVE_WORD_ERROR:"текст не прошёл проверку",CALLBACK_EXCEPTION:"ошибка доставки результата"};
+const stText=r=>ST[r]||"обработка";                                   // неизвестный статус не показываем «как есть»
+async function poll(task){                      // task: {taskId, t0, p:{genres,mode,vocal,lyrics}}
+  view("busy");clearInterval(tick);
+  const upd=()=>{const s=Math.floor((Date.now()-task.t0)/1000);$("tm").textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")};
+  upd();tick=setInterval(upd,500);
+  let bad=0,n=0,last="";
+  try{
+    while(Date.now()-task.t0<MAX_WAIT){
+      await new Promise(r=>setTimeout(r,API_BASE?(Date.now()-task.t0<120000?5000:8000):3000));
+      let s;
+      try{s=await status(task.taskId,n++);bad=0}catch(e){if(++bad>=6)throw e;continue}      // единичные сбои опроса не прерывают ожидание
+      if(s.raw){last=s.raw;$("st").textContent="Статус: "+stText(last)}
+      if(s.status==="success"){clearInterval(tick);setPending(null);return finish(s.tracks||[],task.p)}
+      if(s.status==="failed"){const det=s.message&&s.message!==s.raw?" ("+String(s.message).replace(/suno/gi,"сервис")+")":"";throw new Error("Не удалось создать трек: "+(FAIL[s.raw]||"ошибка генерации")+det)}
+    }
+    throw new Error(`Генерация идёт дольше обычного (статус: ${last?stText(last):"нет данных"}). Трек придёт в чат, когда будет готов.`);
+  }catch(e){clearInterval(tick);setPending(null);view("home");$("err").textContent=e.message||"Что-то пошло не так";hap("error")}
+}
 async function submit(){
   if(!validate())return;$("err").textContent="";
   const a=S.mode==="audio";
-    const p={mode:S.mode,genres:S.genres,mood:S.mood,instruments:S.instr,duration:S.dur[0],vocal:S.vocal,
+  const p={mode:S.mode,genres:S.genres,mood:S.mood,instruments:S.instr,duration:S.dur[0],vocal:S.vocal,
     style:buildStyle({genres:S.genres,mood:S.mood,instruments:S.instr,vocal:S.vocal}),
     lyrics:S.mode==="custom"?$("lyrics").value.trim():"",prompt:$("prompt").value.trim(),
     refUrl:a?S.ref.url:null,refWeight:a?$("weight").value/100:null};
-  view("busy");const t0=Date.now();$("tm").textContent="00:00";
-  tick=setInterval(()=>{const s=Math.floor((Date.now()-t0)/1000);$("tm").textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")},500);
+  view("busy");$("tm").textContent="00:00";$("st").textContent="Отправляем запрос…";
   try{
     const {taskId}=await start(p);
-    for(let n=0;n<POLL_MAX;n++){
-      await new Promise(r=>setTimeout(r,API_BASE?POLL_MS:3000));
-      const s=await status(taskId,n);
-      if(s.status==="success"){clearInterval(tick);return finish(s.tracks||[],p)}
-      if(s.status==="failed")throw new Error("Генерация не удалась");
-    }
-    throw new Error("Генерация занимает дольше обычного — трек придёт в чат.");
-  }catch(e){clearInterval(tick);view("home");$("err").textContent=e.message||"Что-то пошло не так";hap("error")}
+    const task={taskId,t0:Date.now(),p:{genres:p.genres,mode:p.mode,vocal:p.vocal,lyrics:p.lyrics}};
+    setPending(task);return poll(task);          // задача переживает закрытие приложения
+  }catch(e){view("home");$("err").textContent=e.message||"Что-то пошло не так";hap("error")}
 }
 function finish(tracks,p){
   const g=p.genres.map(v=>lab(GENRES,v)).join(", ");
-  const items=tracks.map((t,i)=>({id:Date.now()+i,title:t.title,audioUrl:t.audioUrl||null,imageUrl:t.imageUrl||null,genre:g,ts:Date.now(),fav:false}));
+  // свой текст — как есть; иначе текст от Suno (prompt), если это многострочный текст песни; без вокала текста нет
+  const lyr=t=>p.vocal==="instrumental"?"":(p.mode==="custom"&&p.lyrics?p.lyrics:((t.lyrics||"").trim().includes("\n")?t.lyrics.trim():""));
+  const items=tracks.map((t,i)=>({id:Date.now()+i,title:t.title,audioUrl:t.audioUrl||null,imageUrl:t.imageUrl||null,genre:g,ts:Date.now(),fav:false,lyrics:lyr(t)}));
   save([...items,...load()]);view("done");fill($("doneList"),items,"");hap("success");
 }
 $("go").onclick=submit;$("again").onclick=()=>view("home");
@@ -614,6 +688,7 @@ let isBusy=false;
   else requestAnimationFrame(ts=>{last=ts;frame(ts)});
 })();
 pills();view("home");
+try{const t=JSON.parse(localStorage.getItem(PKEY)||"null");if(t&&Date.now()-t.t0<MAX_WAIT)poll(t);else setPending(null)}catch(e){}   // продолжить ожидание после повторного открытия
 </script>
 </body>
 </html>
