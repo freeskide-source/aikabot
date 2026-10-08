@@ -397,11 +397,26 @@ async function downloadFile(url, filename){
   sk.addEventListener("input",()=>{sk.dataset.drag="1";const dd=A.duration;sk.style.setProperty("--p",sk.value/10+"%");rx.querySelector(".cur").textContent=mmss(isFinite(dd)?sk.value/1000*dd:0)});
   sk.addEventListener("change",()=>{const dd=A.duration;if(isFinite(dd)&&dd>0)A.currentTime=sk.value/1000*dd;sk.dataset.drag="0";sync()});
   sk.addEventListener("blur",()=>{sk.dataset.drag="0"});
-  const lyr=(t.lyrics||"").trim();
-  if(lyr){
-    fillLyrics(rx.querySelector(".ly"),lyr);
+  let lyr=(t.lyrics||"").trim();
+  const canFetch=!!(API_BASE&&t.aid&&t.tid&&!t.inst);          // текст можно запросить: id трека и задачи известны, вокал есть
+  if(lyr||canFetch){
+    const ly=rx.querySelector(".ly");
+    if(lyr)fillLyrics(ly,lyr);
     const chip=document.createElement("button");chip.className="lychip";chip.textContent="Текст";chip.setAttribute("aria-expanded","false");
-    chip.onclick=()=>{const on=d.classList.toggle("lyr");chip.setAttribute("aria-expanded",on);hap()};
+    const note=m=>{ly.textContent="";const x=document.createElement("div");x.className="ln";x.style.color="var(--mu)";x.textContent=m;ly.appendChild(x)};
+    let loading=false;
+    chip.onclick=async()=>{
+      const on=d.classList.toggle("lyr");chip.setAttribute("aria-expanded",on);hap();
+      if(!on||lyr||loading)return;
+      loading=true;note("Загружаем текст…");
+      try{
+        const r=await api("/lyrics?taskId="+encodeURIComponent(t.tid)+"&audioId="+encodeURIComponent(t.aid),{headers:hd()});
+        const txt=String(r.lyrics||"").trim();
+        if(!txt)note("Для этого трека текст недоступен.");
+        else{lyr=txt;t.lyrics=txt;fillLyrics(ly,txt);const all=load(),x=all.find(z=>z.id==t.id);if(x){x.lyrics=txt;save(all)}}   // кэшируем: повторно не запрашиваем
+      }catch(e){note("Текст пока недоступен. Попробуйте чуть позже.")}
+      loading=false;
+    };
     d.querySelector(".ri").appendChild(chip);
   }
   if(String(t.id)===String(playing)){d.classList.add("act");setTimeout(icons,0)}   // строка уже играющего трека в другом разделе
@@ -531,7 +546,7 @@ async function poll(task){                      // task: {taskId, t0, p:{genres,
       let s;
       try{s=await status(task.taskId,n++);bad=0}catch(e){if(++bad>=6)throw e;continue}      // единичные сбои опроса не прерывают ожидание
       if(s.raw){last=s.raw;$("st").textContent="Статус: "+stText(last)}
-      if(s.status==="success"){clearInterval(tick);setPending(null);return finish(s.tracks||[],task.p)}
+      if(s.status==="success"){clearInterval(tick);setPending(null);return finish(s.tracks||[],task.p,task.taskId)}
       if(s.status==="failed"){const det=s.message&&s.message!==s.raw?" ("+String(s.message).replace(/suno/gi,"сервис")+")":"";throw new Error("Не удалось создать трек: "+(FAIL[s.raw]||"ошибка генерации")+det)}
     }
     throw new Error(`Генерация идёт дольше обычного (статус: ${last?stText(last):"нет данных"}). Трек придёт в чат, когда будет готов.`);
@@ -551,11 +566,11 @@ async function submit(){
     setPending(task);return poll(task);          // задача переживает закрытие приложения
   }catch(e){view("home");$("err").textContent=e.message||"Что-то пошло не так";hap("error")}
 }
-function finish(tracks,p){
+function finish(tracks,p,taskId){
   const g=p.genres.map(v=>lab(GENRES,v)).join(", ");
   // свой текст — как есть; иначе текст от Suno (prompt), если это многострочный текст песни; без вокала текста нет
   const lyr=t=>p.vocal==="instrumental"?"":(p.mode==="custom"&&p.lyrics?p.lyrics:((t.lyrics||"").trim().includes("\n")?t.lyrics.trim():""));
-  const items=tracks.map((t,i)=>({id:Date.now()+i,title:t.title,audioUrl:t.audioUrl||null,imageUrl:t.imageUrl||null,genre:g,ts:Date.now(),fav:false,lyrics:lyr(t)}));
+  const items=tracks.map((t,i)=>({id:Date.now()+i,title:t.title,audioUrl:t.audioUrl||null,imageUrl:t.imageUrl||null,genre:g,ts:Date.now(),fav:false,lyrics:lyr(t),aid:t.id||null,tid:taskId||null,inst:p.vocal==="instrumental"}));
   save([...items,...load()]);view("done");fill($("doneList"),items,"");hap("success");
 }
 $("go").onclick=submit;$("again").onclick=()=>view("home");
