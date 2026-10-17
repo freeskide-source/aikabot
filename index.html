@@ -13,6 +13,22 @@
 --btn:linear-gradient(180deg,#c4e6ad,#8cc27a)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;color:var(--tx);background:var(--bg);font:400 15px/1.45 Manrope,system-ui,sans-serif}
+/* --- НОВЫЙ КОД: Ограничение ширины для браузера --- */
+@media (min-width: 500px) {
+  html {
+    background-color: #111; /* Темный фон вокруг приложения */
+    display: flex;
+    justify-content: center;
+  }
+  body {
+    width: 100%;
+    max-width: 420px; /* Ширина как у мобильного телефона */
+    box-shadow: 0 0 30px rgba(0,0,0,0.8); /* Тень вокруг */
+    border-left: 1px solid rgba(255,255,255,0.05);
+    border-right: 1px solid rgba(255,255,255,0.05);
+  }
+}
+/* ------------------------------------------------ */
 body{min-height:100vh;padding:14px 14px calc(104px + env(safe-area-inset-bottom,0px));
 background:radial-gradient(600px 380px at 15% 0,rgba(70,110,60,.35),transparent 70%),radial-gradient(500px 420px at 100% 55%,rgba(40,80,50,.3),transparent 70%),
 radial-gradient(500px 300px at 0 100%,rgba(60,90,40,.3),transparent 70%),var(--bg);background-attachment:fixed}
