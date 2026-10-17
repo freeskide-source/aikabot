@@ -236,56 +236,155 @@ nav button.on{color:var(--ac)}nav button.on::after{content:"";position:absolute;
 const API_BASE = "https://45.43.159.114.nip.io/webhook/aika";
 const MAX_MB = 20;
 const GENRES = [
-  ["ambient","Эмбиент","ambient, atmospheric pads, no drums, wide stereo reverb, slow evolving textures, tape hiss"],
-  ["pop","Поп","pop, catchy hook, bright synths, punchy drums, sidechain bass, radio-ready production"],
-  ["rock","Рок","rock, distorted guitars, live drums, driving bass, anthemic chorus, arena energy"],
-  ["hip hop","Хип-хоп","hip hop, boom bap drums, deep 808 bass, sampled soul chops, head-nod groove"],
-  ["electronic","Электроника","electronic, analog synths, arpeggiated bass, crisp drum machine, wide stereo field"],
-  ["deep house","Дип-хаус","deep house, warm sub-bass, filtered chords, shuffled hi-hats, 122 BPM, hypnotic groove"],
-  ["r&b","R&B","contemporary R&B, smooth keys, silky vocals, slow jam drums, lush harmonies"],
-  ["reggae","Регги","reggae, offbeat skank guitar, deep rolling bass, one-drop drums, sunny island vibe"],
-  ["classical","Классика","classical, orchestral strings, grand piano, dynamic swells, concert hall reverb"],
-  ["indie","Инди","indie, jangly guitars, warm lo-fi drums, intimate vocals, DIY charm"],
-  ["alternative","Альтернатива","alternative, angular guitars, driving drums, brooding bass, 90s alt-rock energy"],
-  ["punk","Панк","punk, fast downstroked guitars, snappy snare, shouty vocals, raw garage production"],
-  ["metal","Метал","metal, palm-muted riffs, double-kick drums, distorted bass, aggressive vocals, tight mix"],
-  ["jazz","Джаз","jazz, swinging ride cymbal, upright bass, brushed drums, upright piano, smoky club vibe"],
-  ["blues","Блюз","blues, electric slide guitar, walking bass, shuffle drums, gritty male vocals"],
-  ["soul","Соул","soul, warm horns, driving bass, gospel-tinged vocals, vintage 60s Motown production"],
-  ["funk","Фанк","funk, slap bass, tight horn stabs, syncopated drums, wah guitar, 1970s groove"],
-  ["disco","Диско","disco, four-on-the-floor kick, lush strings, funky guitar, sparkling hi-hats, 120 BPM"],
-  ["house","Хаус","house, four-on-the-floor kick, filtered chords, deep sub-bass, shuffling hats, 124 BPM"],
-  ["techno","Техно","techno, driving kick, hypnotic loops, metallic hats, industrial textures, 132 BPM"],
-  ["trance","Транс","trance, soaring supersaw lead, rolling bassline, uplifting breakdown, 138 BPM"],
-  ["drum and bass","Драм-н-бейс","drum and bass, breakbeat drums, deep sub-bass, amen chops, 174 BPM"],
-  ["dubstep","Дабстеп","dubstep, wobbling bass, half-time drums, heavy sub, dark synth stabs, 140 BPM"],
-  ["synthwave","Синтвейв","synthwave, retro analog synths, gated reverb drums, neon bassline, 80s soundtrack"],
-  ["lo-fi","Лоу-фай","lo-fi hip hop, dusty vinyl crackle, mellow jazzy chords, boom bap drums, tape saturation"],
-  ["trap","Трэп","trap, rattling hi-hats, hard 808 sub, moody synths, dark melody, 140 BPM"],
-  ["drill","Дрилл","UK drill, sliding 808 bass, skittering hats, dark piano melody, aggressive flow"],
-  ["phonk","Фонк","phonk, distorted cowbell, pitched vocal chops, lo-fi drums, dark Memphis vibe"],
-  ["country","Кантри","country, acoustic guitar, pedal steel, walking bass, twangy vocals, southern twang"],
-  ["folk","Фолк","folk, fingerpicked acoustic guitar, warm harmonies, upright bass, intimate storytelling"],
-  ["latin","Латино","latin, syncopated percussion, nylon guitar, brass stabs, passionate vocals, salsa groove"],
-  ["reggaeton","Реггетон","reggaeton, dembow beat, deep 808 bass, tropical synths, Spanish vocals"],
-  ["k-pop","K-pop","K-pop, bright synths, punchy drums, layered vocals, slick production, key change"],
-  ["j-pop","J-pop","J-pop, energetic synths, upbeat drums, bright vocals, anime-opening energy"],
-  ["afrobeats","Афробит","afrobeats, log drum bass, shaker grooves, bright guitars, smooth vocals"],
-  ["edm","EDM","EDM, festival build-up, supersaw drop, sidechain bass, 128 BPM, big room energy"],
-  ["orchestral","Оркестр","orchestral, cinematic strings, brass swells, timpani hits, epic dynamic range"],
-  ["cinematic","Кинематограф","cinematic, hybrid orchestral, deep sub impacts, soaring strings, trailer-ready"],
-  ["gospel","Госпел","gospel, Hammond organ, choir harmonies, driving drums, uplifting key change"],
-  ["ska","Ска","ska, upstroke guitar, walking bass, punchy horn section, offbeat drums"],
-  ["shoegaze","Шугейз","shoegaze, wall of reverb guitars, dreamy vocals, soft drums, wall-of-sound"],
-  ["chillwave","Чиллвейв","chillwave, warm synth pads, tape saturation, soft drum machine, dreamy vocals"],
-  ["hard rock","Хард-рок","hard rock, crunchy guitar riffs, driving drums, powerful vocals, classic rock energy"],
-  ["progressive rock","Прог-рок","progressive rock, odd time signatures, layered guitars, synth textures, epic structures"],
-  ["bossa nova","Босса-нова","bossa nova, nylon guitar, brushed drums, soft vocals, gentle Portuguese groove"],
-  ["russian chanson","Шансон","russian chanson, acoustic guitar, minor chords, storytelling vocals, melancholic"],
-  ["eurodance","Евродэнс","eurodance, four-on-the-floor kick, bright synths, female vocals, 90s dance energy, 140 BPM"],
-  ["acoustic","Акустика","acoustic, fingerpicked guitar, warm vocals, no drums, intimate room sound"],
-  ["tropical house","Тропикал-хаус","tropical house, plucky marimba, soft kick, breezy synths, summer vibe, 110 BPM"],
-  ["post-punk","Пост-панк","post-punk, angular guitar, driving bass, tom-heavy drums, cold 80s atmosphere"]
+  // ===== ПОП =====
+  ["pop","Поп","Modern pop. Bright synths shimmer into a catchy hook; punchy drums and sidechain bass build tension before the chorus erupts with anthemic, radio-ready energy."],
+  
+  // ===== РОК =====
+  ["rock","Рок","Arena rock. Distorted guitars swell from a quiet intro, then live drums erupt into a driving, anthemic chorus with huge stadium energy."],
+  
+  // ===== ХИП-ХОП =====
+  ["hip hop","Хип-хоп","Boom bap hip hop. Deep 808 bass pulses under dusty sampled soul chops; head-nod drums lock into a hypnotic groove as the flow cuts through."],
+  
+  // ===== ЭЛЕКТРОНИКА =====
+  ["electronic","Электроника","Electronic. Analog synths pulse in the dark; an arpeggiated bassline ascends as a crisp drum machine fades in, creating a wide, immersive stereo field."],
+  
+  // ===== ДИП-ХАУС =====
+  ["deep house","Дип-хаус","Deep house at 122 BPM. Warm sub-bass rolls under filtered chords; shuffled hi-hats create a hypnotic groove that pulls you into the night."],
+  
+  // ===== R&B =====
+  ["r&b","R&B","Contemporary R&B. Smooth keys shimmer behind silky vocals; lush harmonies rise over slow jam drums, wrapped in intimate, late-night warmth."],
+  
+  // ===== РЕГГИ =====
+  ["reggae","Регги","Reggae. Offbeat skank guitar fades in; a deep, rolling bassline locks with one-drop drums, creating a sunny, laid-back island vibe."],
+  
+  // ===== КЛАССИКА =====
+  ["classical","Классика","Classical. Orchestral strings swell from a delicate theme; grand piano rises as the music builds to a dynamic, concert-hall climax."],
+  
+  // ===== ИНДИ =====
+  ["indie","Инди","Indie. Jangly guitars shimmer over warm, lo-fi drums; intimate vocals cut through, giving the track a charming, DIY authenticity."],
+  
+  // ===== АЛЬТЕРНАТИВА =====
+  ["alternative","Альтернатива","Alternative rock. Angular guitars cut through a driving rhythm; brooding bass pulses as the energy builds to a 90s alt-rock explosion."],
+  
+  // ===== ПАНК =====
+  ["punk","Панк","Punk. Fast downstroked guitars erupt from a raw garage mix; snappy snare drives the chaos, with shouty vocals cutting through the wall of sound."],
+  
+  // ===== МЕТАЛ =====
+  ["metal","Метал","Metal. Palm-muted riffs lock into double-kick drums; distorted bass rumbles under aggressive vocals, creating a tight, crushing sonic wall."],
+  
+  // ===== ДЖАЗ =====
+  ["jazz","Джаз","Jazz. Swinging ride cymbal sets the pulse; upright bass walks beneath brushed drums and smoky upright piano, creating an intimate club vibe."],
+  
+  // ===== БЛЮЗ =====
+  ["blues","Блюз","Blues. Electric slide guitar cries over a walking bassline; shuffle drums lock into a gritty groove as raw, soulful vocals rise."],
+  
+  // ===== СОУЛ =====
+  ["soul","Соул","Soul. Warm horns swell behind a driving bassline; gospel-tinged vocals rise over vintage 60s Motown drums, creating a timeless, uplifting feel."],
+  
+  // ===== ФАНК =====
+  ["funk","Фанк","Funk. Slap bass locks into a tight, syncopated groove; wah guitar and horn stabs cut through 1970s drums, creating an irresistible, danceable pulse."],
+  
+  // ===== ДИСКО =====
+  ["disco","Диско","Disco at 120 BPM. Four-on-the-floor kick drives lush strings; funky guitar and sparkling hi-hats create an irresistible, glamorous dancefloor energy."],
+  
+  // ===== ХАУС =====
+  ["house","Хаус","House at 124 BPM. Four-on-the-floor kick anchors filtered chords; deep sub-bass pulses under shuffling hats, creating a hypnotic, driving groove."],
+  
+  // ===== ТЕХНО =====
+  ["techno","Техно","Techno at 132 BPM. A driving kick locks into hypnotic loops; metallic hats and industrial textures build tension in a dark, mechanical groove."],
+  
+  // ===== ТРАНС =====
+  ["trance","Транс","Trance at 138 BPM. A soaring supersaw lead ascends from a rolling bassline; the breakdown shimmers before the drop erupts with uplifting energy."],
+  
+  // ===== ДРАМ-Н-БЕЙС =====
+  ["drum and bass","Драм-н-бейс","Drum and bass at 174 BPM. Breakbeat drums erupt from a deep sub-bass; amen chops cut through the mix, driving the energy to a frantic, exhilarating peak."],
+  
+  // ===== ДАБСТЕП =====
+  ["dubstep","Дабстеп","Dubstep at 140 BPM. Half-time drums lock under a wobbling bass; dark synth stabs cut through as the heavy sub drops with massive force."],
+  
+  // ===== СИНТВЕЙВ =====
+  ["synthwave","Синтвейв","Synthwave. Retro analog synths shimmer like neon lights; gated reverb drums drive a pulsing bassline, creating an 80s soundtrack vibe."],
+  
+  // ===== ЛОУ-ФАЙ =====
+  ["lo-fi","Лоу-фай","Lo-fi hip hop. Dusty vinyl crackle sets the scene; mellow jazzy chords shimmer over boom bap drums, all wrapped in warm tape saturation."],
+  
+  // ===== ТРЭП =====
+  ["trap","Трэп","Trap at 140 BPM. Rattling hi-hats lock into a hard 808 sub; moody synths and a dark melody create an intense, hypnotic atmosphere."],
+  
+  // ===== ДРИЛЛ =====
+  ["drill","Дрилл","UK drill. Sliding 808 bass pulses under skittering hats; a dark piano melody cuts through as the aggressive flow drives the energy."],
+  
+  // ===== ФОНК =====
+  ["phonk","Фонк","Phonk. Distorted cowbell cuts through lo-fi drums; pitched vocal chops and dark Memphis vibes create a gritty, hypnotic groove."],
+  
+  // ===== КАНТРИ =====
+  ["country","Кантри","Country. Acoustic guitar and pedal steel shimmer from a southern twang; walking bass and twangy vocals create a warm, storytelling atmosphere."],
+  
+  // ===== ФОЛК =====
+  ["folk","Фолк","Folk. Fingerpicked acoustic guitar sets an intimate scene; warm harmonies rise over upright bass, creating a timeless storytelling vibe."],
+  
+  // ===== ЛАТИНО =====
+  ["latin","Латино","Latin. Syncopated percussion drives a passionate salsa groove; nylon guitar and brass stabs cut through, creating an irresistible, fiery energy."],
+  
+  // ===== РЕГГЕТОН =====
+  ["reggaeton","Реггетон","Reggaeton. The dembow beat locks into a deep 808 bass; tropical synths shimmer as Spanish vocals ride the groove with swagger."],
+  
+  // ===== K-POP =====
+  ["k-pop","K-pop","K-pop. Bright synths explode into punchy drums; layered vocals rise as the production builds to a slick, key-change moment of pure energy."],
+  
+  // ===== J-POP =====
+  ["j-pop","J-pop","J-pop. Energetic synths pulse under upbeat drums; bright vocals soar with anime-opening energy, creating a vibrant, joyful atmosphere."],
+  
+  // ===== АФРОБИТ =====
+  ["afrobeats","Афробит","Afrobeats. Log drum bass pulses under shaker grooves; bright guitars shimmer as smooth vocals ride the rhythm with effortless swagger."],
+  
+  // ===== EDM =====
+  ["edm","EDM","EDM at 128 BPM. A festival build-up erupts into a supersaw drop; sidechain bass pulses with big-room energy, creating a euphoric release."],
+  
+  // ===== ОРКЕСТР =====
+  ["orchestral","Оркестр","Orchestral. Cinematic strings swell over brass and timpani hits; the music builds to an epic, dynamic climax with huge emotional range."],
+  
+  // ===== КИНЕМАТОГРАФ =====
+  ["cinematic","Кинематограф","Cinematic. Hybrid orchestral textures shimmer over deep sub impacts; soaring strings build tension, creating a trailer-ready atmosphere."],
+  
+  // ===== ГОСПЕЛ =====
+  ["gospel","Госпел","Gospel. Hammond organ swells under choir harmonies; driving drums lock into an uplifting groove that builds to a triumphant, key-change climax."],
+  
+  // ===== СКА =====
+  ["ska","Ска","Ska. Upstroke guitar locks into a walking bassline; punchy horns erupt over offbeat drums, creating an irresistible, high-energy groove."],
+  
+  // ===== ШУГЕЙЗ =====
+  ["shoegaze","Шугейз","Shoegaze. A wall of reverb guitars shimmers like a dream; soft drums pulse under dreamy vocals, creating a warm, wall-of-sound atmosphere."],
+  
+  // ===== ЧИЛЛВЕЙВ =====
+  ["chillwave","Чиллвейв","Chillwave. Warm synth pads shimmer through tape saturation; a soft drum machine pulses under dreamy vocals, creating a hazy, nostalgic vibe."],
+  
+  // ===== ХАРД-РОК =====
+  ["hard rock","Хард-рок","Hard rock. Crunchy guitar riffs erupt from a driving rhythm; powerful vocals cut through as the classic rock energy builds to a massive climax."],
+  
+  // ===== ПРОГ-РОК =====
+  ["progressive rock","Прог-рок","Progressive rock. Odd time signatures shift under layered guitars; synth textures shimmer as the music builds through epic, dynamic structures."],
+  
+  // ===== БОССА-НОВА =====
+  ["bossa nova","Босса-нова","Bossa nova. Nylon guitar sets a gentle groove; brushed drums and soft vocals ride a warm, Portuguese-inspired rhythm with effortless elegance."],
+  
+  // ===== ШАНСОН =====
+  ["russian chanson","Шансон","Russian chanson. Acoustic guitar and minor chords set a melancholic scene; storytelling vocals rise, creating a raw, emotional atmosphere."],
+  
+  // ===== ЕВРОДЭНС =====
+  ["eurodance","Евродэнс","Eurodance at 140 BPM. Four-on-the-floor kick drives bright synths; female vocals soar over a 90s dance energy, creating an euphoric, nostalgic vibe."],
+  
+  // ===== АКУСТИКА =====
+  ["acoustic","Акустика","Acoustic. Fingerpicked guitar and warm vocals shimmer in an intimate room; the music breathes with a gentle, unpolished honesty."],
+  
+  // ===== ТРОПИКАЛ-ХАУС =====
+  ["tropical house","Тропикал-хаус","Tropical house at 110 BPM. Plucky marimba and soft kick create a breezy vibe; shimmering synths evoke a warm, summer sunset atmosphere."],
+  
+  // ===== ПОСТ-ПАНК =====
+  ["post-punk","Пост-панк","Post-punk. Angular guitar cuts through a driving bassline; tom-heavy drums pulse under cold, 80s-inspired atmosphere, building tension."],
+  
+  // ===== АУДИОКНИГА / АУДИОСПЕКТАКЛЬ (НОВЫЙ) =====
+  ["audiobook","Аудиокнига / Аудиоспектакль","Audiobook / audio drama. Cinematic, atmospheric music. Soft strings and subtle synth pads create a gentle, immersive soundscape. The music stays in the background, supporting the narration with a warm, evocative texture."]
 ];
 const MOODS = [
   ["calm","Спокойное","calm, introspective, gentle dynamics, low energy, meditative"],
