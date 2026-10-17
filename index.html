@@ -96,6 +96,22 @@ nav button.on{color:var(--ac)}nav button.on::after{content:"";position:absolute;
 .chip.on{border-color:var(--ac);color:var(--ac);background:rgba(166,217,143,.12)}
 .av{width:72px;height:72px;border-radius:50%;background:var(--btn);color:#0d1f12;display:grid;place-items:center;font:500 30px Jost;margin:0 auto 10px;object-fit:cover}
 .st{display:flex;gap:10px;margin-top:14px}.st div{flex:1;text-align:center;padding:12px;border:1px solid var(--ln);border-radius:18px}.st b{display:block;font:400 24px Jost;color:var(--ac)}.st span{font-size:12px;color:var(--mu)}
+.bal{display:flex;align-items:center;gap:12px;background:var(--g);border:1px solid var(--ln);border-radius:24px;padding:10px 10px 10px 16px;margin-bottom:14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.bal .bi{flex:1;min-width:0}.bn{font:400 28px/1 Jost;color:var(--ac);margin-right:6px}.bal.low{border-color:rgba(255,179,138,.5)}.bal.low .bn{color:#ffb38a}
+.mini{border:0;background:var(--btn);color:#0d1f12;font:700 13px Manrope;padding:10px 16px;border-radius:999px;flex:none}
+#pay{position:fixed;inset:0;z-index:60;visibility:hidden}#pay.open{visibility:visible}
+#pay-bg{position:absolute;inset:0;background:rgba(0,0,0,.55);opacity:0;transition:.2s}#pay.open #pay-bg{opacity:1}
+#pay-box{position:absolute;left:0;right:0;bottom:0;max-height:88vh;overflow:auto;background:rgba(12,22,16,.97);border:1px solid var(--ln);border-radius:26px 26px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:.25s}
+#pay.open #pay-box{transform:none}
+.ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}.ph b{font-size:17px;font-weight:500}
+.pk{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid var(--ln);background:rgba(0,0,0,.28);color:var(--tx);font:400 15px Manrope;padding:12px 14px;border-radius:20px;margin-bottom:8px}
+.pk.on{border-color:var(--ac);background:rgba(166,217,143,.12)}
+.pn{font:400 32px/1 Jost;color:var(--ac);text-align:center}.pm b{display:block;font-weight:500}.pm .pq{font-size:12px;color:var(--mu)}
+.pp{font:400 21px Jost;text-align:right}.pm .pd{display:inline-block;margin-left:8px;font-size:11px;font-weight:700;color:#0d1f12;background:var(--btn);border-radius:999px;padding:2px 8px}
+.lnk{display:block;width:100%;border:0;background:none;color:var(--ac);font:500 14px Manrope;padding:12px;margin-top:4px}a.lnk{text-align:center;text-decoration:none}
+#toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translate(-50%,-160%);z-index:80;background:rgba(12,22,16,.97);border:1px solid var(--ac);color:var(--tx);border-radius:999px;padding:10px 18px;font-weight:500;transition:transform .25s;max-width:92vw}
+#toast.show{transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){#toast,#pay-box,#pay-bg{transition:none}}
 </style>
 </head>
 <body>
@@ -111,6 +127,7 @@ nav button.on{color:var(--ac)}nav button.on::after{content:"";position:absolute;
 
 <!-- ГЛАВНАЯ -->
 <main id="v-home">
+  <div class="bal" id="bal"><div class="bi"><span class="bn" id="bal-n">—</span><span id="bal-w">генераций</span><div class="fm" id="bal-s">Один трек — одна генерация</div></div><button class="mini" id="bal-buy">Пополнить</button></div>
   <div id="last"></div>
   <div class="card">
     <div class="seg" id="mode">
@@ -155,6 +172,7 @@ nav button.on{color:var(--ac)}nav button.on::after{content:"";position:absolute;
     <textarea id="prompt" maxlength="500" class="fl" placeholder="Например: тёплая ностальгия по летним вечерам у моря"></textarea>
     <p class="err" id="err"></p>
     <button class="go" id="go" disabled><span data-ic="spark" data-s="20"></span>Создать</button>
+    <p class="fm" id="cost" style="text-align:center;margin:10px 0 0"></p>
   </div>
 </main>
 
@@ -183,8 +201,22 @@ nav button.on{color:var(--ac)}nav button.on::after{content:"";position:absolute;
   <div class="chips" id="sh-c"></div>
 </div></div>
 
+<div id="pay"><div id="pay-bg"></div><div id="pay-box" role="dialog" aria-modal="true" aria-labelledby="pay-t">
+  <div class="ph"><b id="pay-t">Пополнить генерации</b><button class="ib" id="pay-x" data-ic="x" data-s="16" aria-label="Закрыть"></button></div>
+  <p class="fm" id="pay-bal" style="margin:0 0 12px"></p>
+  <div id="pay-list"></div>
+  <p class="err" id="pay-err" role="alert"></p>
+  <button class="go" id="pay-go">Оплатить</button>
+  <p class="fm" id="pay-st" aria-live="polite" style="text-align:center;margin:10px 0 0"></p>
+  <a class="lnk hide" id="pay-link" href="#">Открыть страницу оплаты</a>
+  <button class="lnk hide" id="pay-chk">Я оплатил — проверить</button>
+  <p class="fm" style="text-align:center;margin:6px 0 0">Оплата через Finik. Генерации зачисляются автоматически.</p>
+</div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
 <script>
-/* API_BASE — публичный URL webhook'ов n8n. Пусто = демо-режим без реальной генерации. */
+/* API_BASE — публичный URL webhook'ов n8n. Пусто = демо-режим без реальной генерации.
+   Эндпоинты: POST /upload, POST /generate, GET /status, GET /credits, POST /buy (оплата Finik). */
 const API_BASE = "https://45.43.159.114.nip.io/webhook/aika";
 const MAX_MB = 20;
 const GENRES = [
@@ -428,7 +460,7 @@ const renderFav=()=>fill($("favList"),load().filter(t=>t.fav),"Здесь поя
 /* экраны */
 let cur="home";
 function view(n){
-  cur=n;
+  cur=n;renderBal();
   ["home","busy","done","hist","fav","prof"].forEach(x=>$("v-"+x).classList.toggle("hide",x!==n));
   $("hero").classList.toggle("hide",!(n==="home"||n==="busy"));
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.n===(n==="busy"||n==="done"?"home":n)));
@@ -445,9 +477,10 @@ function profile(){
   const nm=u?[u.first_name,u.last_name].filter(Boolean).join(" "):"Гость";
   $("profBox").innerHTML=`${u?.photo_url?`<img class="av" src="${encodeURI(u.photo_url)}" alt="">`:`<div class="av"></div>`}
   <h2 style="text-align:center;margin:0"></h2><p class="fm" style="text-align:center;margin:2px 0 0"></p>
-  <div class="st"><div><b>${all.length}</b><span>треков</span></div><div><b>${all.filter(t=>t.fav).length}</b><span>в избранном</span></div></div>
+  <div class="st"><div><b>${all.length}</b><span>треков</span></div><div><b>${all.filter(t=>t.fav).length}</b><span>в избранном</span></div><div><b>${credits==null?"—":credits}</b><span>генераций</span></div></div>
+  <button class="go" id="p-buy" style="margin-top:14px">Пополнить баланс</button>
   <p class="fm" style="text-align:center;margin-top:18px">${API_BASE?"Подключено к серверу":"Демо-режим: API не подключён"}</p>`;
-  $("profBox").querySelector("h2").textContent=nm;
+  $("p-buy").onclick=openPay;$("profBox").querySelector("h2").textContent=nm;
   $("profBox").querySelector(".fm").textContent=u?.username?"@"+u.username:"";
   $("profBox").querySelector(".av").textContent=nm[0]||"";
 }
@@ -525,9 +558,77 @@ function buildStyle(p){
   return out.join(", ");
 }
 const hd=()=>({"Content-Type":"application/json","X-Init-Data":tg?.initData||""});
-async function api(path,opt){const r=await fetch(API_BASE+path,opt);if(!r.ok){let m="";try{m=(await r.json()).error||""}catch(e){}throw new Error("Сервер вернул "+r.status+(m?": "+m:""))}return r.json()}
+async function api(path,opt){const r=await fetch(API_BASE+path,opt);if(!r.ok){let m="";try{m=(await r.json()).error||""}catch(e){}const e=new Error(r.status===402?"Закончились генерации — пополните баланс":"Сервер вернул "+r.status+(m?": "+m:""));e.status=r.status;e.code=m;throw e}return r.json()}
 const start=p=>API_BASE?api("/generate",{method:"POST",headers:hd(),body:JSON.stringify(p)}):Promise.resolve({taskId:"demo"});
 const status=(id,n)=>API_BASE?api("/status?taskId="+encodeURIComponent(id),{headers:hd()}):Promise.resolve(n>=2?{status:"success",tracks:[{title:"Mountain Flow (демо)",lyrics:"[Verse]\nДемо-текст песни\nВторая строка куплета\n\n[Chorus]\nПрипев из демо-режима"}]}:{status:"pending"});
+
+/* ===== баланс и оплата (Finik) ===== */
+let PACKS=[{id:"pack_1",credits:1,amount:49},{id:"pack_5",credits:5,amount:199},{id:"pack_10",credits:10,amount:249}],credits=null,payPick="pack_5",payWatch=null,payBusy=false;
+const GEN=["генерация","генерации","генераций"],PAYKEY="aika.pay",PAY_WAIT=10*60*1000,DKEY="aika.demo.credits";
+const plural=(n,f)=>{const a=n%100,b=a%10;return a>10&&a<20?f[2]:b===1?f[0]:b>1&&b<5?f[1]:f[2]};
+const getPay=()=>{try{return JSON.parse(localStorage.getItem(PAYKEY)||"null")}catch(e){return null}};
+const setPay=v=>{try{v?localStorage.setItem(PAYKEY,JSON.stringify(v)):localStorage.removeItem(PAYKEY)}catch(e){}};
+const demoCr=()=>{try{const v=localStorage.getItem(DKEY);return v==null?3:+v}catch(e){return 3}};
+function setCr(n){credits=Math.max(0,n);if(!API_BASE){try{localStorage.setItem(DKEY,credits)}catch(e){}}renderBal()}
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("show"),3600)}
+function renderBal(){
+  const n=credits;$("bal-n").textContent=n==null?"—":n;$("bal-w").textContent=n==null?"генераций":plural(n,GEN);
+  $("bal").classList.toggle("low",n===0);$("cost").textContent=n===0?"Нет генераций — пополните баланс":"Один трек — одна генерация";
+  $("bal-s").textContent=n===0?"Чтобы создать трек, пополните баланс":"Один трек — одна генерация";
+  if(cur==="prof")profile();
+}
+async function fetchCredits(){
+  if(!API_BASE){setCr(demoCr());return credits}
+  try{const r=await api("/credits",{headers:hd()});const ps=(r.packs||[]).filter(p=>p&&p.id&&p.credits>0&&p.amount>0);if(ps.length)PACKS=ps;setCr(Number(r.credits)||0)}catch(e){}
+  return credits;
+}
+function openExt(u){try{tg?.openLink?tg.openLink(u,{try_instant_view:false}):window.open(u,"_blank","noopener")}catch(e){window.open(u,"_blank","noopener")}}
+function drawPacks(){
+  const L=$("pay-list"),b0=PACKS[0].amount/PACKS[0].credits;L.innerHTML="";
+  PACKS.forEach(p=>{
+    const d=Math.round((1-p.amount/(p.credits*b0))*100),q=Math.round(p.amount/p.credits*10)/10,b=document.createElement("button");
+    b.className="pk"+(p.id===payPick?" on":"");b.setAttribute("aria-pressed",p.id===payPick);
+    b.innerHTML='<span class="pn"></span><span class="pm"><b></b><span class="pq"></span></span><span class="pp"></span>';
+    b.querySelector(".pn").textContent=p.credits;b.querySelector("b").textContent=plural(p.credits,GEN);
+    if(d>0){const s=document.createElement("span");s.className="pd";s.textContent="−"+d+"%";b.querySelector("b").appendChild(s)}
+    b.querySelector(".pq").textContent=(Number.isInteger(q)?q:String(q).replace(".",","))+" сом за трек";b.querySelector(".pp").textContent=p.amount+" сом";
+    b.onclick=()=>{payPick=p.id;hap();drawPacks();updPay()};L.appendChild(b);
+  });
+}
+function updPay(){
+  const p=PACKS.find(x=>x.id===payPick),g=getPay();
+  $("pay-go").textContent=payBusy?"Создаём платёж…":"Оплатить"+(p?" "+p.amount+" сом":"");$("pay-go").disabled=payBusy||!p;
+  $("pay-chk").classList.toggle("hide",!g);$("pay-link").classList.toggle("hide",!(g&&g.url));$("pay-st").textContent=g?"Ждём подтверждение оплаты — обычно меньше минуты.":"";
+  $("pay-bal").textContent="Сейчас на балансе: "+(credits==null?"—":credits+" "+plural(credits,GEN));
+}
+function openPay(){if(!PACKS.some(p=>p.id===payPick))payPick=PACKS[0].id;$("pay-err").textContent="";drawPacks();updPay();$("pay").classList.add("open")}
+const closePay=()=>$("pay").classList.remove("open");
+function startWatch(){clearInterval(payWatch);payWatch=setInterval(checkPaid,3000)}
+function onPaid(n){closePay();updPay();toast("Оплата прошла: +"+n+" "+plural(n,GEN));hap("success");$("err").textContent=""}
+async function checkPaid(man){
+  const p=getPay();if(!p)return;await fetchCredits();
+  if(credits>p.base){setPay(null);clearInterval(payWatch);onPaid(credits-p.base)}
+  else if(Date.now()-p.t0>PAY_WAIT){setPay(null);clearInterval(payWatch);updPay();$("pay-err").textContent="Платёж не подтвердился. Если вы оплатили, генерации зачислятся автоматически."}
+  else if(man===true)$("pay-err").textContent="Оплата пока не поступила. Проверьте ещё раз через минуту.";
+}
+async function buy(){
+  const p=PACKS.find(x=>x.id===payPick);if(!p||payBusy)return;
+  payBusy=true;$("pay-err").textContent="";updPay();
+  try{
+    if(!API_BASE){setCr((credits||0)+p.credits);return onPaid(p.credits)}
+    const base=credits==null?(await fetchCredits())||0:credits;
+    const r=await api("/buy",{method:"POST",headers:hd(),body:JSON.stringify({pack:p.id})});
+    if(!/^https:\/\//.test(r.paymentUrl||""))throw new Error("Не удалось получить ссылку на оплату");
+    setPay({base,t0:Date.now(),url:r.paymentUrl});openExt(r.paymentUrl);startWatch();
+  }catch(e){$("pay-err").textContent=e.message||"Не удалось создать платёж";hap("error")}
+  finally{payBusy=false;updPay()}
+}
+$("bal-buy").onclick=openPay;$("pay-bg").onclick=closePay;$("pay-x").onclick=closePay;$("pay-go").onclick=buy;
+$("pay-link").onclick=e=>{e.preventDefault();const g=getPay();g&&openExt(g.url)};
+$("pay-chk").onclick=async()=>{$("pay-chk").disabled=true;await checkPaid(true);$("pay-chk").disabled=false};
+const resync=()=>getPay()?checkPaid():fetchCredits();
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)resync()});
+try{tg?.onEvent?.("activated",resync)}catch(e){}
 
 let tick;
 const PKEY="aika.pending", MAX_WAIT=15*60*1000;
@@ -550,10 +651,11 @@ async function poll(task){                      // task: {taskId, t0, p:{genres,
       if(s.status==="failed"){const det=s.message&&s.message!==s.raw?" ("+String(s.message).replace(/suno/gi,"сервис")+")":"";throw new Error("Не удалось создать трек: "+(FAIL[s.raw]||"ошибка генерации")+det)}
     }
     throw new Error(`Генерация идёт дольше обычного (статус: ${last?stText(last):"нет данных"}). Трек придёт в чат, когда будет готов.`);
-  }catch(e){clearInterval(tick);setPending(null);view("home");$("err").textContent=e.message||"Что-то пошло не так";hap("error")}
+  }catch(e){clearInterval(tick);setPending(null);view("home");$("err").textContent=e.message||"Что-то пошло не так";hap("error");fetchCredits()}
 }
 async function submit(){
   if(!validate())return;$("err").textContent="";
+  if(credits===0){$("err").textContent="Закончились генерации — пополните баланс.";hap("error");return openPay()}
   const a=S.mode==="audio";
   const p={mode:S.mode,genres:S.genres,mood:S.mood,instruments:S.instr,duration:S.dur[0],vocal:S.vocal,
     style:buildStyle({genres:S.genres,mood:S.mood,instruments:S.instr,vocal:S.vocal}),
@@ -561,17 +663,17 @@ async function submit(){
     refUrl:a?S.ref.url:null,refWeight:a?$("weight").value/100:null};
   view("busy");$("tm").textContent="00:00";$("st").textContent="Отправляем запрос…";
   try{
-    const {taskId}=await start(p);
+    const {taskId}=await start(p);if(credits!=null)setCr(credits-1);
     const task={taskId,t0:Date.now(),p:{genres:p.genres,mode:p.mode,vocal:p.vocal,lyrics:p.lyrics}};
     setPending(task);return poll(task);          // задача переживает закрытие приложения
-  }catch(e){view("home");$("err").textContent=e.message||"Что-то пошло не так";hap("error")}
+  }catch(e){view("home");$("err").textContent=e.message||"Что-то пошло не так";hap("error");if(e.status===402){setCr(0);openPay()}else fetchCredits()}
 }
 function finish(tracks,p,taskId){
   const g=p.genres.map(v=>lab(GENRES,v)).join(", ");
   // свой текст — как есть; иначе текст от Suno (prompt), если это многострочный текст песни; без вокала текста нет
   const lyr=t=>p.vocal==="instrumental"?"":(p.mode==="custom"&&p.lyrics?p.lyrics:((t.lyrics||"").trim().includes("\n")?t.lyrics.trim():""));
   const items=tracks.map((t,i)=>({id:Date.now()+i,title:t.title,audioUrl:t.audioUrl||null,imageUrl:t.imageUrl||null,genre:g,ts:Date.now(),fav:false,lyrics:lyr(t),aid:t.id||null,tid:taskId||null,inst:p.vocal==="instrumental"}));
-  save([...items,...load()]);view("done");fill($("doneList"),items,"");hap("success");
+  save([...items,...load()]);fetchCredits();view("done");fill($("doneList"),items,"");hap("success");
 }
 $("go").onclick=submit;$("again").onclick=()=>view("home");
 
@@ -702,7 +804,7 @@ let isBusy=false;
   if(still){e=0;(GL.complete?Promise.resolve():new Promise(r=>GL.onload=r)).then(()=>draw(1.3));}
   else requestAnimationFrame(ts=>{last=ts;frame(ts)});
 })();
-pills();view("home");
+pills();view("home");resync();if(getPay())startWatch();
 try{const t=JSON.parse(localStorage.getItem(PKEY)||"null");if(t&&Date.now()-t.t0<MAX_WAIT)poll(t);else setPending(null)}catch(e){}   // продолжить ожидание после повторного открытия
 </script>
 </body>
