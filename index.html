@@ -441,7 +441,7 @@ document.querySelectorAll("[data-ic]").forEach(e=>e.insertAdjacentHTML("afterbeg
 const tg=window.Telegram?.WebApp, $=id=>document.getElementById(id);
 const hap=t=>{try{t?tg?.HapticFeedback?.notificationOccurred(t):tg?.HapticFeedback?.selectionChanged()}catch(e){}};
 if(tg){tg.ready();tg.expand();try{tg.setHeaderColor("#07100c");tg.setBackgroundColor("#07100c")}catch(e){}}
-const S={mode:"custom",genres:["ambient"],mood:["calm"],instr:[],dur:["1:30"],vocal:"male",ref:null};
+const S={mode:"custom",genres:[],mood:["calm"],instr:[],dur:["1:30"],vocal:"male",ref:null};
 const lab=(arr,v)=>(arr.find(x=>x[0]===v)||[v,v])[1];
 
 /* хранилище */
