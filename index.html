@@ -686,7 +686,7 @@ const start=p=>API_BASE?api("/generate",{method:"POST",headers:hd(),body:JSON.st
 const status=(id,n)=>API_BASE?api("/status?taskId="+encodeURIComponent(id),{headers:hd()}):Promise.resolve(n>=2?{status:"success",tracks:[{title:"Mountain Flow (демо)",lyrics:"[Verse]\nДемо-текст песни\nВторая строка куплета\n\n[Chorus]\nПрипев из демо-режима"}]}:{status:"pending"});
 
 /* ===== баланс и оплата (Finik) ===== */
-let PACKS=[{id:"pack_1",credits:1,amount:49},{id:"pack_5",credits:5,amount:199},{id:"pack_10",credits:10,amount:249}],credits=null,payPick="pack_5",payWatch=null,payBusy=false;
+let PACKS=[{id:"pack_1",credits:1,amount:25},{id:"pack_5",credits:5,amount:100},{id:"pack_10",credits:10,amount:150}],credits=null,payPick="pack_5",payWatch=null,payBusy=false;
 const GEN=["генерация","генерации","генераций"],PAYKEY="aika.pay",PAY_WAIT=10*60*1000,DKEY="aika.demo.credits";
 const plural=(n,f)=>{const a=n%100,b=a%10;return a>10&&a<20?f[2]:b===1?f[0]:b>1&&b<5?f[1]:f[2]};
 const getPay=()=>{try{return JSON.parse(localStorage.getItem(PAYKEY)||"null")}catch(e){return null}};
